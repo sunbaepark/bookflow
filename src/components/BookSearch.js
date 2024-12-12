@@ -13,11 +13,11 @@ function BookSearch() {
 
     return books.filter(book =>
       book.title.includes(searchQuery)
-    )
+    );
   }, [searchQuery, books])
 
   const handleSearch = (e) => {
-    e.preventDefault()
+    e.preventDefault();
   }
 
   return (
@@ -31,6 +31,18 @@ function BookSearch() {
           className="flex-1 px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </form>
+      <div className="space-y-4">
+        {searchResults.map((book) => (
+          <div
+            key={book._id}
+            className="flex justify-between items-center p-4 border rounded hover:bg-gray-50 cursor-pointer"
+          >
+            <div>
+              <h3 className="font-medium">{book.title}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
