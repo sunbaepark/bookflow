@@ -1,14 +1,23 @@
 "use client"
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 
 export default function BookSearch() {
   const [searchQuery, setSearchQuery] = useState("")
-  // 임시 데이터 (나중에 API로 대체)
-  const books = [
-    { _id: '1', title: '해리포터와 마법사의 돌', status: '대출가능', location: 'A-1-1' },
-    { _id: '2', title: '반지의 제왕', status: '대출중', location: 'B-2-3' },
-    { _id: '3', title: '어린왕자', status: '대출가능', location: 'C-1-2' }
-  ]
+  const [books, setBooks] = useState([])
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const response = await fetch('/api/books')
+        if (!response.ok) throw new Error('도서 목록을 가져오는데 실패했습니다')
+        const data = await response.json()
+        setBooks(data)
+      } catch (error) {
+        console.error('도서 데이터 로딩 실패:', error)
+      }
+    }
+    fetchBooks()
+  }, [])
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -18,7 +27,7 @@ export default function BookSearch() {
     return books.filter(book =>
       book.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  }, [searchQuery])
+  }, [searchQuery, books])
 
   const handleSearch = (e) => {
     e.preventDefault()

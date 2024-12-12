@@ -5,16 +5,23 @@ import { useState, useEffect } from "react"
 export default function LibraryDropdown() {
   const [isLibraryMenuOpen, setIsLibraryMenuOpen] = useState(false)
   const [selectedLibrary, setSelectedLibrary] = useState(null)
-  const [libraries] = useState([
-    { _id: '1', name: '중앙도서관' },
-    { _id: '2', name: '디지털도서관' },
-    { _id: '3', name: '어린이도서관' }
-  ])
+  const [libraries, setLibraries] = useState([])
 
   useEffect(() => {
-    if (!selectedLibrary && libraries.length > 0) {
-      setSelectedLibrary(libraries[0])
+    const fetchLibraries = async () => {
+      try {
+        const response = await fetch('/api/libraries')
+        if (!response.ok) throw new Error('도서관 목록을 가져오는데 실패했습니다')
+        const data = await response.json()
+        setLibraries(data)
+        if (!selectedLibrary && data.length > 0) {
+          setSelectedLibrary(data[0])
+        }
+      } catch (error) {
+        console.error('도서관 데이터 로딩 실패:', error)
+      }
     }
+    fetchLibraries()
   }, [])
 
   const handleLibrarySelect = (library) => {
