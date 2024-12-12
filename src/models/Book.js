@@ -10,8 +10,9 @@ const bookSchema = new mongoose.Schema({
     enum: ['대출가능', '대출중'],
     default: '대출가능'
   },
-  location: {
-    type: String,
+  bookshelfId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bookshelf',
     required: true
   },
   libraryId: {
