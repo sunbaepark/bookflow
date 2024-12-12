@@ -1,8 +1,20 @@
 "use client"
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { useLibrary } from "../contexts/LibraryContext"
 
 function BookSearch() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { books } = useLibrary();
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return books;
+    }
+
+    return books.filter(book =>
+      book.title.includes(searchQuery)
+    )
+  }, [searchQuery, books])
 
   const handleSearch = (e) => {
     e.preventDefault()
