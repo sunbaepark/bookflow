@@ -1,5 +1,6 @@
 import LibraryDropdown from '@/components/LibraryDropdown'
 import Title from '@/components/title'
+import BookSearch from '@/components/BookSearch'
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
         <LibraryDropdown />
       </div>
       <Title />
+      <BookSearch />
     </main>
   )
 }
