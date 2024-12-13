@@ -1,4 +1,5 @@
 import "./globals.css"
+import { LibraryProvider } from '@/contexts/LibraryContext'
 
 export const metadata = {
   title: "Bookflow",
@@ -8,7 +9,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <LibraryProvider>
+          {children}
+        </LibraryProvider>
+      </body>
     </html>
   )
 }
