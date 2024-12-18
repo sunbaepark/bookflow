@@ -1,9 +1,10 @@
 import mongoose from 'mongoose'
+import 'dotenv/config'
 
-const MONGODB_URI = 'mongodb://localhost:27017/bookflow'
+const MONGODB_URI = process.env.MONGODB_URI
 
 if (!MONGODB_URI) {
-  throw new Error('MongoDB URI가 정의되지 않았습니다.')
+  throw new Error('MONGODB_URI가 설정되지 않았습니다.')
 }
 
 let cached = global.mongoose
@@ -13,15 +14,29 @@ if (!cached) {
 }
 
 async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn
-  }
+  try {
+    if (cached.conn) {
+      console.log('기존 MongoDB 연결 사용')
+      return cached.conn
+    }
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI)
+    console.log('새로운 MongoDB 연결 시도...')
+    const opts = {
+      bufferCommands: false,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts)
+    cached.conn = await cached.promise
+    console.log('MongoDB 연결 성공')
+
+    return cached.conn
+  } catch (e) {
+    console.error('MongoDB 연결 에러:', e)
+    cached.promise = null
+    throw e
   }
-  cached.conn = await cached.promise
-  return cached.conn
 }
 
 export default dbConnect 

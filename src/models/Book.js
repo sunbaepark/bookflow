@@ -10,16 +10,23 @@ const bookSchema = new mongoose.Schema({
     enum: ['대출가능', '대출중'],
     default: '대출가능'
   },
-  bookshelfId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Bookshelf',
-    required: true
-  },
   libraryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Library',
     required: true
+  },
+  bookshelfId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bookshelf',
+    required: true
   }
+}, {
+  timestamps: true
 })
 
-export default mongoose.models.Book || mongoose.model('Book', bookSchema) 
+// 기존 모델이 있다면 삭제
+if (mongoose.models.Book) {
+  delete mongoose.models.Book
+}
+
+export default mongoose.model('Book', bookSchema) 

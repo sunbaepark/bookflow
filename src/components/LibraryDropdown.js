@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { useLibrary } from '@/contexts/LibraryContext'
 
 export default function LibraryDropdown() {
+  const { selectedLibrary, setSelectedLibrary } = useLibrary()
   const [isLibraryMenuOpen, setIsLibraryMenuOpen] = useState(false)
   const [libraries, setLibraries] = useState([])
-  const { selectedLibrary, setSelectedLibrary } = useLibrary()
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchLibraries = async () => {
@@ -14,14 +15,19 @@ export default function LibraryDropdown() {
         const response = await fetch('/api/libraries')
         if (!response.ok) throw new Error('도서관 목록을 가져오는데 실패했습니다')
         const data = await response.json()
-        setLibraries(data)
-        if (!selectedLibrary && data.length > 0) {
-          setSelectedLibrary(data[0])
+        const sortedLibraries = data.sort((a, b) => a.name.localeCompare(b.name))
+        setLibraries(sortedLibraries)
+        if (!selectedLibrary && sortedLibraries.length > 0) {
+          setSelectedLibrary(sortedLibraries[0])
         }
       } catch (error) {
-        console.error('도서관 데이터 로딩 실패:', error)
+        console.error('도서관 목록 로딩 실패:', error)
+        setLibraries([])
+      } finally {
+        setIsLoading(false)
       }
     }
+
     fetchLibraries()
   }, [])
 
@@ -30,71 +36,37 @@ export default function LibraryDropdown() {
     setIsLibraryMenuOpen(false)
   }
 
-  const sortedLibraries = libraries
-    .filter(lib => lib._id !== selectedLibrary?._id)
-    .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+  const otherLibraries = libraries.filter(library => library._id !== selectedLibrary?._id)
 
   return (
-    <div className="w-[200px] relative z-[1000]">
-      <div
-        className="hidden sm:block relative"
-        onMouseEnter={() => setIsLibraryMenuOpen(true)}
-        onMouseLeave={() => setIsLibraryMenuOpen(false)}
-      >
-        <div className={`bg-zinc-800 px-4 py-3 rounded-b-2xl shadow-md transition-all duration-200 flex justify-center ${isLibraryMenuOpen ? 'bg-zinc-900 rounded-b-none' : ''}`}>
-          <span className="text-white text-lg font-bold cursor-pointer whitespace-nowrap">
-            {selectedLibrary?.name || '도서관 선택'}
-          </span>
-        </div>
-
-        {isLibraryMenuOpen && (
-          <div className="absolute left-0 right-0 animate-slideDown origin-top">
-            {sortedLibraries.map((library, index, arr) => (
-              <div
-                key={library._id}
-                onClick={() => handleLibrarySelect(library)}
-                className={`bg-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-900 active:bg-zinc-900 transition-colors shadow-md flex justify-center
-                  ${index === arr.length - 1 ? 'rounded-b-2xl' : ''}`}
-              >
-                <span className="text-white text-lg font-bold whitespace-nowrap">
-                  {library.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+    <div
+      className="h-full w-full relative border-x border-zinc-700/20"
+      onClick={() => setIsLibraryMenuOpen(!isLibraryMenuOpen)}
+    >
+      <div className="h-full flex items-center justify-center hover:bg-zinc-900/90 transition-colors cursor-pointer">
+        <span className="text-[15px] font-normal text-zinc-100">
+          {isLoading ? '로딩중...' : selectedLibrary?.name}
+        </span>
       </div>
 
-      <div
-        className="sm:hidden relative"
-        onClick={() => setIsLibraryMenuOpen(!isLibraryMenuOpen)}
-      >
-        <div className={`bg-zinc-800 px-4 py-3 rounded-b-2xl shadow-md transition-all duration-200 flex justify-center ${isLibraryMenuOpen ? 'bg-zinc-900 rounded-b-none' : ''}`}>
-          <span className="text-white text-lg font-bold cursor-pointer whitespace-nowrap">
-            {selectedLibrary?.name || '도서관 선택'}
-          </span>
+      {isLibraryMenuOpen && otherLibraries.length > 0 && (
+        <div className="absolute top-full left-0 w-full bg-zinc-800 shadow-lg z-50">
+          {otherLibraries.map((library) => (
+            <div
+              key={library._id}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLibrarySelect(library);
+              }}
+              className="w-full px-6 py-3 hover:bg-zinc-900 transition-colors cursor-pointer text-center group"
+            >
+              <span className="text-[15px] font-normal text-zinc-100 group-hover:text-zinc-100 transition-colors">
+                {library.name}
+              </span>
+            </div>
+          ))}
         </div>
-
-        {isLibraryMenuOpen && (
-          <div className="absolute left-0 right-0 animate-slideDown origin-top">
-            {sortedLibraries.map((library, index, arr) => (
-              <div
-                key={library._id}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleLibrarySelect(library)
-                }}
-                className={`bg-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-900 active:bg-zinc-900 transition-colors shadow-md flex justify-center
-                  ${index === arr.length - 1 ? 'rounded-b-2xl' : ''}`}
-              >
-                <span className="text-white text-lg font-bold whitespace-nowrap">
-                  {library.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
