@@ -37,7 +37,6 @@ export default function MapGrid({
 
   return (
     <Group>
-      {/* 그리드 라인 */}
       {Array.from({ length: cols + 1 }).map((_, i) => (
         <Line
           key={`v${i}`}
@@ -55,7 +54,6 @@ export default function MapGrid({
         />
       ))}
 
-      {/* 벽 셀 */}
       {gridData.map((row, i) => 
         row.map((cell, j) => (
           <Rect

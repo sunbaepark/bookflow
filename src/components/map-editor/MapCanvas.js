@@ -25,13 +25,6 @@ export default function MapCanvas({
   const [imageObj, setImageObj] = useState(null)
   const containerRef = useRef(null)
 
-  const calculateDimensions = (image) => {
-    if (!image) return { width: 800, height: 600 }
-    let { width, height } = dimensions
-    // dimensions는 이미 MapEditor에서 정해줌. 필요시 추가 로직
-    return { width, height }
-  }
-
   useEffect(() => {
     if (library?.image) {
       const image = new window.Image()
@@ -45,8 +38,6 @@ export default function MapCanvas({
     }
   }, [library])
 
-  const stageDimensions = calculateDimensions(imageObj)
-
   return (
     <div 
       className="w-full h-[calc(100vh-88px)] bg-gray-100 overflow-auto" 
@@ -54,23 +45,24 @@ export default function MapCanvas({
     >
       <div className="min-w-fit min-h-fit inline-block">
         <Stage 
-          width={stageDimensions.width} 
-          height={stageDimensions.height}
+          width={dimensions.width} 
+          height={dimensions.height}
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
         >
-          {/* 배경 이미지 레이어 (이벤트 비청취) */}
+          {/* 배경 이미지 레이어: 이벤트 비청취 */}
           <Layer listening={false}>
             {imageObj && (
               <Image
                 image={imageObj}
-                width={stageDimensions.width}
-                height={stageDimensions.height}
+                width={dimensions.width}
+                height={dimensions.height}
                 opacity={selectedTool === 'wall' ? 0.5 : 1}
               />
             )}
           </Layer>
-          {/* 마커와 책장 레이어 */}
+
+          {/* 마커, 책장 레이어 */}
           <Layer>
             <MapMarkers
               markers={markers}
@@ -87,7 +79,8 @@ export default function MapCanvas({
               cellSize={30}
             />
           </Layer>
-          {/* 그리드 레이어 (마우스 이벤트 받기 위하여 최상단) */}
+
+          {/* 그리드 레이어 - 최상단에 배치 */}
           <Layer>
             {selectedTool === 'wall' && (
               <MapGrid

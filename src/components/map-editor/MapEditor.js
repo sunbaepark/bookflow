@@ -6,12 +6,9 @@ import MapCanvas from './MapCanvas'
 import ShelfPanel from './ShelfPanel'
 import { FIXED_GRID_SIZE } from './constants'
 import { useMapData } from '@/hooks/useMapData'
-import MapGrid from './MapGrid'
 
 export default function MapEditor({ onClose }) {
-  const libraryId = new URLSearchParams(window.location.search).get('libraryId')
-  const { loading, error, library, mapData, bookshelves } = useMapData(libraryId)
-  
+  const [libraryId, setLibraryId] = useState(null);
   const [selectedTool, setSelectedTool] = useState(null)
   const [markers, setMarkers] = useState({ start: null, end: null })
   const [shelves, setShelves] = useState([])
@@ -23,10 +20,18 @@ export default function MapEditor({ onClose }) {
   const [cellSize, setCellSize] = useState({ width: 30, height: 30 })
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
 
-  // 초기 데이터 로딩
+  useEffect(() => {
+    // 클라이언트 환경에서만 window 사용
+    if (typeof window !== 'undefined') {
+      const id = new URLSearchParams(window.location.search).get('libraryId')
+      setLibraryId(id)
+    }
+  }, [])
+
+  const { loading, error, library, mapData, bookshelves } = useMapData(libraryId)
+
   useEffect(() => {
     if (mapData) {
-      // 시작점과 도착점 설정
       const initialMarkers = {
         start: mapData.markers?.start ? {
           x: mapData.markers.start.x,
@@ -41,13 +46,11 @@ export default function MapEditor({ onClose }) {
     }
   }, [mapData])
 
-  // useEffect 추가
   useEffect(() => {
     if (mapData?.dimensions) {
       const rows = Math.floor(mapData.dimensions.height / FIXED_GRID_SIZE)
       const cols = Math.floor(mapData.dimensions.width / FIXED_GRID_SIZE)
       
-      // walls 데이터가 있으면 사용하고, 없으면 새로운 그리드 생성
       if (mapData.walls) {
         setGridData(mapData.walls.map(row => 
           row.map(cell => cell === 1 ? 'wall' : null)
@@ -58,39 +61,44 @@ export default function MapEditor({ onClose }) {
         )
         setGridData(newGridData)
       }
+
+      setDimensions({ 
+        width: mapData.dimensions.width, 
+        height: mapData.dimensions.height 
+      })
     }
   }, [mapData])
 
   // 초기 그리드 데이터 생성
   const initializeGridData = () => {
-    const cellSize = 30;
-    const cols = Math.floor(dimensions.width / cellSize);
-    const rows = Math.floor(dimensions.height / cellSize);
+    if (!dimensions.width || !dimensions.height) return;
+    const cSize = 30;
+    const cols = Math.floor(dimensions.width / cSize);
+    const rows = Math.floor(dimensions.height / cSize);
     
-    setGridData(Array(rows).fill(null).map(() => Array(cols).fill(null)));
-    setCellSize({ width: cellSize, height: cellSize });
+    const newGridData = Array(rows).fill(null).map(() => 
+      Array(cols).fill(null)
+    );
+    setGridData(newGridData);
+    setCellSize({ width: cSize, height: cSize });
   };
 
-  // dimensions 변경시 그리드 초기화
   useEffect(() => {
     if (dimensions.width && dimensions.height) {
       initializeGridData();
     }
   }, [dimensions]);
 
-  // 마우스 이벤트 핸들러들
-  const handleMouseDown = (i, j) => {
+  const handleMouseDown = (e, i, j) => {
     if (selectedTool !== 'wall') return;
-    
     setIsDrawing(true);
     const newGridData = [...gridData];
     newGridData[i][j] = newGridData[i][j] === 'wall' ? null : 'wall';
     setGridData(newGridData);
   };
 
-  const handleMouseEnter = (i, j) => {
+  const handleMouseEnter = (e, i, j) => {
     if (!isDrawing || selectedTool !== 'wall') return;
-    
     const newGridData = [...gridData];
     newGridData[i][j] = newGridData[i][j] === 'wall' ? null : 'wall';
     setGridData(newGridData);
@@ -100,7 +108,6 @@ export default function MapEditor({ onClose }) {
     setIsDrawing(false);
   };
 
-  // 맵 데이터 저장
   const handleSave = async () => {
     setIsSaving(true)
     setSaveMessage(null)
@@ -135,7 +142,6 @@ export default function MapEditor({ onClose }) {
       }
 
       const result = await response.json()
-      console.log('저��된 데이터:', result)
       setSaveMessage({ type: 'success', text: '성공적으로 저장되었습니다.' })
     } catch (error) {
       console.error('저장 중 오류:', error)
@@ -143,6 +149,14 @@ export default function MapEditor({ onClose }) {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  if (!libraryId) {
+    return <div>라이브러리 ID를 불러오는 중...</div>;
+  }
+
+  if (error) {
+    return <div>도서관 정보를 가져오는 중 문제가 발생했습니다: {error.message}</div>;
   }
 
   return (
@@ -171,12 +185,10 @@ export default function MapEditor({ onClose }) {
               handleMouseDown={handleMouseDown}
               handleMouseEnter={handleMouseEnter}
               dimensions={dimensions}
-              setDimensions={setDimensions}
             />
           </div>
         </div>
       </div>
-
       <ShelfPanel
         shelves={shelves}
         setShelves={setShelves}
